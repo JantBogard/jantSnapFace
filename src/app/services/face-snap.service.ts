@@ -1,67 +1,44 @@
+import { map, switchMap, tap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { FaceSnap } from './../models/face-snap.model';
 import { Injectable } from "@angular/core";
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: "root"
 })
 export class FaceSnapService {
-  faceSnaps: FaceSnap[] = [
-    {
-      id: 1,
-      title: 'Panier de basket',
-      description: 'C\'est là que la balle doit passer pour marquer des points',
-      createdDate: new Date(),
-      snaps: 0,
-      imageUrl: 'https://img.freepik.com/photos-gratuite/panier-basket-fond-ciel-bleu_262238-1833.jpg?size=626&ext=jpg&ga=GA1.2.776459075.1653383763',
-      location: 'Hopital Général'
-    },
-    {
-      id: 2,
-      title: 'Balle de sport',
-      description: 'Sur cette image on peut les balles des différent sport de balle',
-      createdDate: new Date(),
-      snaps: 6,
-      imageUrl: 'https://img.freepik.com/photos-gratuite/composition-divers-equipements-sportifs-pour-fitness-jeux_93675-84275.jpg?size=626&ext=jpg&ga=GA1.2.776459075.1653383763',
-      location: 'Salle de gym'
-    },
-    {
-      id: 3,
-      title: 'Terrain de handball',
-      description: '😤 qu\'est ce que je deteste ce sport',
-      createdDate: new Date(),
-      snaps: 0,
-      imageUrl: 'https://img.freepik.com/photos-gratuite/vue-aerienne-du-terrain-football-du-stade-sportif_153977-92.jpg?size=626&ext=jpg&ga=GA1.2.776459075.1653383763'
-    }
-  ];
 
-  getAllFaceSnaps(): FaceSnap[] {
-    return this.faceSnaps;
+  constructor(private http: HttpClient) { };
+
+  getAllFaceSnaps(): Observable<FaceSnap[]> {
+    return this.http.get<FaceSnap[]>('http://localhost:3000/facesnaps');
   }
 
-  getSnapById(faceSnapId: number): FaceSnap {
-    const faceSnap = this.faceSnaps.find(faceSnap => faceSnap.id === faceSnapId);
-    if (faceSnap) {
-      return faceSnap;
-    } else {
-      throw new Error("FaceSnap not found with id: " + faceSnapId);
-    }
-
+  getSnapById(faceSnapId: number): Observable<FaceSnap> {
+    return this.http.get<FaceSnap>(`http://localhost:3000/facesnaps/${faceSnapId}`);
   }
 
-  snapFaceSnapsById(faceSnapId: number, snapType: 'snap' | 'unsnap'): void {
-    const faceSnap = this.getSnapById(faceSnapId);
-
-    snapType === 'snap' ? faceSnap.snaps++ : faceSnap.snaps--;
+  snapFaceSnapsById(faceSnapId: number, snapType: 'snap' | 'unsnap'): Observable<FaceSnap> {
+    return this.getSnapById(faceSnapId).pipe(
+      map(faceSnap => ({
+        ...faceSnap,
+        snaps: faceSnap.snaps + (snapType === 'snap' ? 1 : -1)
+      })),
+      switchMap(updateFaceSnap => this.http.put<FaceSnap>(`http://localhost:3000/facesnaps/${updateFaceSnap.id}`, updateFaceSnap))
+    );
   }
 
-  addFaceSnap(formValue: { title: string, description: string, imageUrl: string, location?: string }): void {
-    const faceSnap: FaceSnap = {
-      ...formValue,
-      createdDate: new Date(),
-      snaps: 0,
-      id: this.faceSnaps[this.faceSnaps.length - 1].id + 1
-    }
-
-    this.faceSnaps.push(faceSnap);
+  addFaceSnap(formValue: { title: string, description: string, imageUrl: string, location?: string }): Observable<FaceSnap> {
+    return this.getAllFaceSnaps().pipe(
+      map(faceSnaps => [...faceSnaps].sort((a, b) => a.id - b.id)),
+      map(sortedFaceSnaps => ({
+        ...formValue,
+        createdDate: new Date(),
+        snaps: 0,
+        id: sortedFaceSnaps[sortedFaceSnaps.length - 1].id + 1
+      })),
+      switchMap(faceSnap => this.http.post<FaceSnap>('http://localhost:3000/facesnaps', faceSnap))
+    );
   }
 }
