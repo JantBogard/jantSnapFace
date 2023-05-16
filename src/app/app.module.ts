@@ -5,6 +5,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
 import { LandingPageModule } from './landing-page/landing-page.module';
+import { AuthModule } from './auth/auth.module';
 
 @NgModule({
   declarations: [
@@ -14,7 +15,8 @@ import { LandingPageModule } from './landing-page/landing-page.module';
     BrowserModule,
     AppRoutingModule,
     CoreModule,
-    LandingPageModule
+    LandingPageModule,
+    AuthModule
   ],
   bootstrap: [AppComponent]
 })
