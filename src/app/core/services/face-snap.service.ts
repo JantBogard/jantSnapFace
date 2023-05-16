@@ -1,6 +1,6 @@
 import { map, switchMap, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
-import { FaceSnap } from './../models/face-snap.model';
+import { FaceSnap } from '../models/face-snap.model';
 import { Injectable } from "@angular/core";
 import { Observable } from 'rxjs';
 
